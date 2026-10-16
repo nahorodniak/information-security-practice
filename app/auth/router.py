@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,7 @@ from app.auth.dependencies import get_current_user
 from app.auth.jwt_handler import (create_access_token, create_refresh_token,
                                   verify_token)
 from app.database import get_db
+from app.middleware.rate_limiter import limiter
 from app.models import Role, User
 from app.schemas import (LoginRequest, TokenRefreshRequest, TokenResponse,
                          UserCreate, UserInfo, UserResponse)
@@ -20,7 +21,8 @@ def _primary_role(user: User) -> str:
 
 @router.post("/register", response_model=UserResponse,
              status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == user_data.username).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Username вже зайнятий")
     if db.query(User).filter(User.email == user_data.email).first():
@@ -43,7 +45,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")  # захист від brute force / credential stuffing
+def login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == credentials.username).first()
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Невірний логін або пароль")
