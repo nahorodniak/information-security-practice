@@ -1,0 +1,17 @@
+services:
+  api:
+    build: .
+    container_name: dean_office_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app_code              # hot-reload коду
+      - db_data:/app_code/data   # персистентна БД SQLite
+    environment:
+      # Секрет береться з файлу .env (не в Git!); після ":-" — значення лише для розробки
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-only-secret-change-me}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+    restart: unless-stopped
+
+volumes:
+  db_data:
