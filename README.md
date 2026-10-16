@@ -1,7 +1,11 @@
+# README
+
 # Електронний деканат — захищений REST API
 
-**ПІБ:** _Прізвище Ім'я По батькові_  
-**Група:** КН-3x  
+**ПІБ:** Нагородняк Анастасія
+
+**Група:** 233з он (Б2F501ЗОН24)
+
 **Дисципліна:** Безпека інформаційних систем — Заочна практична робота №1
 
 FastAPI + SQLite + SQLAlchemy/Alembic + JWT (access/refresh) + RBAC + bcrypt.
@@ -25,29 +29,29 @@ docker compose exec api alembic upgrade head
 docker compose exec api python -m app.seed
 ```
 
-- API: http://localhost:8000
-- Swagger UI: http://localhost:8000/docs
+- API: [http://localhost:8000](http://localhost:8000/)
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 Повне скидання БД: `docker compose down -v` → `docker compose up -d --build` → міграція → seed.
 
 ## Ендпоінти та ролі
 
 | Метод | Шлях | Доступ | Примітка |
-|-------|------|--------|----------|
+| --- | --- | --- | --- |
 | GET | `/`, `/health` | public | `/health` → `tables: 8` |
 | POST | `/auth/register` | public | ліміт 10/хв; нова роль — лише `student` |
 | POST | `/auth/login` | public | ліміт 5/хв; повертає access + refresh |
 | POST | `/auth/refresh` | public (потрібен refresh token) | ротація пари токенів |
 | GET | `/auth/me` | будь-який автентифікований | лише access token |
 | GET | `/students/me/grades` | student | лише власні оцінки (id з токена) |
-| GET | `/teachers/students/{id}/grades` | teacher, admin | |
+| GET | `/teachers/students/{id}/grades` | teacher, admin |  |
 | POST | `/teachers/grades` | teacher, admin | `assigned_by` = автор оцінки |
-| GET | `/admin/users` | admin | |
+| GET | `/admin/users` | admin |  |
 
 ## Тестові облікові записи
 
 | Логін | Роль |
-|-------|------|
+| --- | --- |
 | `admin` | admin |
 | `teacher01` | teacher |
 | `student01` | student |
@@ -57,7 +61,7 @@ docker compose exec api python -m app.seed
 ## Матриця RBAC (seed)
 
 | Дозвіл | admin | teacher | student |
-|--------|:-----:|:-------:|:-------:|
+| --- | --- | --- | --- |
 | read_grades | ✓ | ✓ | ✓ |
 | edit_grades | ✓ | ✓ | — |
 | read_schedule | ✓ | ✓ | ✓ |
@@ -69,7 +73,7 @@ docker compose exec api python -m app.seed
 Логін обмежено 5 запитами/хв, тому тест №20 виконується останнім.
 
 | № | Сценарій | Очікування | Фактичний результат |
-|---|----------|------------|---------------------|
+| --- | --- | --- | --- |
 | 1 | `GET /health` | 200, `tables: 8` | **200**, `{"status":"healthy","database":"SQLite","tables":8}` |
 | 2 | Реєстрація (валідні дані) | 201, без `password_hash` | **201**, у відповіді немає `password_hash` |
 | 3 | Дублікат username | 409 | **409** «Username вже зайнятий» |
@@ -97,7 +101,7 @@ docker compose exec api python -m app.seed
 ## STRIDE
 
 | Загроза | Контрзахід у коді | Що можна покращити |
-|---------|-------------------|--------------------|
+| --- | --- | --- |
 | **S**poofing — підроблення особи / токена | bcrypt (cost 12), підписаний JWT HS256, `algorithms=[...]` (проти `alg: none`), перевірка `type`, однакова відповідь 401 (проти enumeration), CORS allow-list | RS256 / ключі, що ротуються; MFA |
 | **T**ampering — зміна даних | підпис JWT, Pydantic-валідація (діапазон оцінки 0–100, allow-list імені), ORM (параметризовані запити → немає SQLi), санітизація `comment` (bleach) | цифровий підпис записів оцінок, аудит-журнал змін |
 | **R**epudiation — відмова від дій | поле `assigned_by` в оцінках (підзвітність) | окрема таблиця аудиту (хто/що/коли/з якої IP) |
@@ -107,10 +111,4 @@ docker compose exec api python -m app.seed
 
 ## Скріншоти
 
-| Файл | Що на скріншоті |
-|------|-----------------|
-| ![Swagger](docs/screenshots/01-swagger.png) | `01-swagger.png` — Swagger UI з групами Authentication, Students, Teachers, Admin |
-| ![Authorize](docs/screenshots/02-authorize.png) | `02-authorize.png` — після Authorize: `GET /auth/me` → 200 |
-| ![403](docs/screenshots/03-forbidden.png) | `03-forbidden.png` — студент → `GET /admin/users` → 403 |
-| ![429](docs/screenshots/04-rate-limit.png) | `04-rate-limit.png` — цикл логінів, останній код 429 |
-| ![Headers](docs/screenshots/05-headers.png) | `05-headers.png` — заголовки безпеки `/health` |
+[Untitled](Untitled%203fbb94942094816ca970d347e4c969d4.csv)
